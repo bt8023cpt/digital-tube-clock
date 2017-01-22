@@ -78,10 +78,10 @@ void Key_Control(u8 keyValue)
                         break;
 			
                 case(0xfb):     // 1111 1011 P1.2口对应按键按下 K2 设置
-                        
+                        break;
 			
                 case(0xf7):     // 1111 0111 P1.3口对应按键按下 K3 切换/星期
-                        
+                        break;
 			
 		case(0xef):     // 1110 1111 P1.4口对应按键按下 K4 加/闹钟
                         switch(location)

@@ -3,12 +3,13 @@
 #include "bsp_delay.h"
 #include "bsp_key.h"
 
+/* 定义控制数码管的引脚，这里使用宏定义形式是便于以后程序的移植 */
 #define Segment P0
 #define Digital P2
 
 /* 定义模型变量 */
 u8 location = 0;								// 记录当期是哪一位闪烁
-u8 value[4] = {1, 2, 3, 4};
+u8 value[4] = {1, 2, 3, 4};							// 记录当前数码管显示的值
 
 /* 数码管段选码、位选码 */
 u8 SegCode[10] = {0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F};	// 段选高电平有效
