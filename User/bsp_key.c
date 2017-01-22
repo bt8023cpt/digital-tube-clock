@@ -63,15 +63,27 @@ void Key_Control(u8 keyValue)
         /* 根据捕捉的键值解析出按下的键，并作出相应的处理 */
         switch(keyValue)
         {
-                case(0xfe):     // 1111 1110 P1.0口对应按键按下 K0
-                        
-                        if(value[location] > 0)
+                case(0xfe):     // 1111 1110 P1.0口对应按键按下 K0 左/年
+                        if(location > 0)
 			{
-				value[location] -= 1;
+				location -= 1;
 			}
                         break;
                 
-                case(0xfd):     // 1111 1101 P1.1口对应按键按下 K1
+                case(0xfd):     // 1111 1101 P1.1口对应按键按下 K1 右/日期
+                        if(location < 3)
+			{
+				location += 1;
+			}
+                        break;
+			
+                case(0xfb):     // 1111 1011 P1.2口对应按键按下 K2 设置
+                        
+			
+                case(0xf7):     // 1111 0111 P1.3口对应按键按下 K3 切换/星期
+                        
+			
+		case(0xef):     // 1110 1111 P1.4口对应按键按下 K4 加/闹钟
                         switch(location)
 			{
 				case (0):
@@ -110,16 +122,11 @@ void Key_Control(u8 keyValue)
 					break;
 			}
                         break;
-                case(0xfb):     // 1111 1011 P1.2口对应按键按下 K2
-                        if(location < 3)
+			
+                case(0xdf):     // 1101 1111 P1.5口对应按键按下 K5 减/温度
+                        if(value[location] > 0)
 			{
-				location += 1;
-			}
-                        break;
-                case(0xf7):     // 1111 0111 P1.3口对应按键按下 K3
-                        if(location > 0)
-			{
-				location -= 1;
+				value[location] -= 1;
 			}
                         break;
         }
