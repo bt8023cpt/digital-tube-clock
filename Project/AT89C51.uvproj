@@ -398,6 +398,11 @@
               <FileType>1</FileType>
               <FilePath>..\User\bsp_key.c</FilePath>
             </File>
+            <File>
+              <FileName>bsp_ds1302.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\bsp_ds1302.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

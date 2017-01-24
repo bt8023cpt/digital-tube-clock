@@ -1,7 +1,7 @@
 #ifndef __BSP_KEY_H
 #define __BSP_KEY_H
 
-#include "reg52.h"
+#include <reg52.h>
 #include "main.h"
 
 #define GPIO_KEY P1
