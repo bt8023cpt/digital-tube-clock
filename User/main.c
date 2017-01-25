@@ -13,10 +13,12 @@ sbit beep = P3^6;
 /* 定义模型变量 */
 u8 location = 0;								// 记录当期是哪一位闪烁
 u8 value[4] = {1, 2, 3, 4};							// 记录当前数码管显示的值
-u8 alarm[4] = {1, 2, 3, 4};							// 记录
+u8 alarm[4] = {1, 2, 3, 4};							// 记录闹钟响铃的时刻
 
-enum display_mode state = WeekDisplay;
-enum flicker_state flag = flicker;
+enum display_mode state = ClockDisplay;
+enum flicker_state flag;
+
+u8 InterruptCount = 0;
 
 /* 共阴极数码管段选码、位选码 '0123456789abcdef-' */
 u8 SegCode[17] = {0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f, 0x77, 0x7c, 0x39, 0x5e, 0x79, 0x71, 0x40};
@@ -27,11 +29,21 @@ int main()
         u8 i, j;
         u8 tmp1, tmp2;
         
-        /* 这里设置的值是表示，10次扫描全部显示，10次扫描location位不显示 */
+        /* 这里设置的值是表示, flickerCount 次扫描全部显示, flickerCount 次扫描location位不显示 */
         u8 flickerCount = 20;
         
         IT0 = 1;
-        IE = 0x81;
+        IE = IE | 0x81;
+        
+        /* 定时器0工作在方式1：16位定时计数模式 */
+        TMOD = 0x01;
+        
+        /* 这里计数初值为62500，16次就可以得到1000000次计数 */
+        TH0 = 0x0b;
+        TL0 = 0xdc;
+        
+        /* 开启总中断和定时器0中断 */
+        IE = IE | 0x82;
         
         DS1302_WriteRegister(DS1302_CONTROL | DS1302_WRITE, 0x00);
         
@@ -84,6 +96,7 @@ int main()
                         case (DateSet):
                                 tmp1 = DS1302_ReadRegister(DS1302_MONTH | DS1302_READ);
                                 tmp2 = DS1302_ReadRegister(DS1302_DATE | DS1302_READ);
+                                flag = flicker;
                         
                                 value[0] = (tmp1 & 0xf0) >> 4;
                                 value[1] = tmp1 & 0x0f;
@@ -144,9 +157,6 @@ int main()
                                 break;
 
                 }
-                
-                
-                
                 
                 /* 这里扫描的时候是正常显示4位 */
                 for(j = flickerCount; j > 0; j--)
@@ -210,4 +220,28 @@ int main()
 void INT0_Handler() interrupt 0
 {
         Key_Control(Key_Scan());
+}
+
+/**
+ * @Descroption 定时器0中断服务函数
+ */
+void TIM0_Handler() interrupt 1
+{
+        TR0 = 0;
+        
+        /* 手动的装载初值 */
+        TH0 = 0x0b;
+        TL0 = 0xdc;
+        
+        TR0 = 1;
+        
+        InterruptCount++;
+        
+        /* 定时时间到了2秒之后返回时间显示界面 */
+        if(InterruptCount >= 32)
+        {
+                InterruptCount = 0;
+                TR0 = 0;
+                state = ClockDisplay;
+        }
 }

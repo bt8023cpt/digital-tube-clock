@@ -23,8 +23,8 @@ enum display_mode
 
 enum flicker_state
 {
-        light = 0,
-        flicker = 1
+        light = 0,              // 数码管常亮显示
+        flicker = 1             // 数码管闪烁显示
 };
 
 #endif /* __MAIN_H */

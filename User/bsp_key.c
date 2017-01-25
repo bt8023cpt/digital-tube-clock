@@ -1,6 +1,15 @@
 #include "bsp_key.h"
 #include "bsp_delay.h"
 
+/* 这里需要使用extern声明其他c文件定义的变量 */
+extern u8 value[4];
+extern u8 location;
+
+extern enum display_mode state;
+extern enum flicker_state flag;
+
+extern u8 InterruptCount;
+
 /** 
  * @Description 按键扫描函数(8个按键同时扫描)
  * @return u8   按键键值
@@ -50,10 +59,6 @@ void delay(u32 t)
                 for(j = 296; j > 0; j--);
 }
 
-/* 这里需要使用extern声明其他c文件定义的变量 */
-extern u8 value[4];
-extern u8 location;
-
 /** 
  * @Description 按键控制函数(8个按键同时控制)
  * @param u8    按键扫描到的键值
@@ -64,70 +69,105 @@ void Key_Control(u8 keyValue)
         switch(keyValue)
         {
                 case(0xfe):     // 1111 1110 P1.0口对应按键按下 K0 左/年
-                        if(location > 0)
-			{
-				location -= 1;
-			}
+                        state = YearDisplay;
+                        InterruptCount = 0;
+                        TR0 = 1;
                         break;
                 
                 case(0xfd):     // 1111 1101 P1.1口对应按键按下 K1 右/日期
-                        if(location < 3)
-			{
-				location += 1;
-			}
+                        state = DateDisplay;
+                        InterruptCount = 0;
+                        TR0 = 1;
                         break;
 			
                 case(0xfb):     // 1111 1011 P1.2口对应按键按下 K2 设置
                         break;
 			
                 case(0xf7):     // 1111 0111 P1.3口对应按键按下 K3 切换/星期
+                        state = WeekDisplay;
+                        TR0 = 1;
                         break;
 			
 		case(0xef):     // 1110 1111 P1.4口对应按键按下 K4 加/闹钟
-                        switch(location)
-			{
-				case (0):
-					if(value[0] < 2)
-					{
-						value[0] += 1;
-					}
-					
-					if(value[0] == 2 && value[1] > 3)
-					{
-						value[1] = 3;
-					}
-					
-					break;
-				case (1):
-					if(value[0] < 2 && value[1] < 9)
-					{
-						value[1] += 1;
-					}
-					else if(value[0] == 2 && value[1] < 3)
-					{
-						value[1] += 1;
-					}
-					break;
-				case (2):
-					if(value[location] < 5)
-					{
-						value[location] += 1;
-					}
-					break;
-				case (3):
-					if(value[location] < 9)
-					{
-						value[location] += 1;
-					}
-					break;
-			}
+                        state = AlarmDisplay;
+                        InterruptCount = 0;
+                        TR0 = 1;
                         break;
 			
                 case(0xdf):     // 1101 1111 P1.5口对应按键按下 K5 减/温度
-                        if(value[location] > 0)
-			{
-				value[location] -= 1;
-			}
+                        state = TemperatureDisplay;
+                        TR0 = 1;
                         break;
         }
+        
+//        /* 根据捕捉的键值解析出按下的键，并作出相应的处理 */
+//        switch(keyValue)
+//        {
+//                case(0xfe):     // 1111 1110 P1.0口对应按键按下 K0 左/年
+//                        if(location > 0)
+//			{
+//				location -= 1;
+//			}
+//                        break;
+//                
+//                case(0xfd):     // 1111 1101 P1.1口对应按键按下 K1 右/日期
+//                        if(location < 3)
+//			{
+//				location += 1;
+//			}
+//                        break;
+//			
+//                case(0xfb):     // 1111 1011 P1.2口对应按键按下 K2 设置
+//                        break;
+//			
+//                case(0xf7):     // 1111 0111 P1.3口对应按键按下 K3 切换/星期
+//                        break;
+//			
+//		case(0xef):     // 1110 1111 P1.4口对应按键按下 K4 加/闹钟
+//                        switch(location)
+//			{
+//				case (0):
+//					if(value[0] < 2)
+//					{
+//						value[0] += 1;
+//					}
+//					
+//					if(value[0] == 2 && value[1] > 3)
+//					{
+//						value[1] = 3;
+//					}
+//					
+//					break;
+//				case (1):
+//					if(value[0] < 2 && value[1] < 9)
+//					{
+//						value[1] += 1;
+//					}
+//					else if(value[0] == 2 && value[1] < 3)
+//					{
+//						value[1] += 1;
+//					}
+//					break;
+//				case (2):
+//					if(value[location] < 5)
+//					{
+//						value[location] += 1;
+//					}
+//					break;
+//				case (3):
+//					if(value[location] < 9)
+//					{
+//						value[location] += 1;
+//					}
+//					break;
+//			}
+//                        break;
+//			
+//                case(0xdf):     // 1101 1111 P1.5口对应按键按下 K5 减/温度
+//                        if(value[location] > 0)
+//			{
+//				value[location] -= 1;
+//			}
+//                        break;
+//        }
 }
