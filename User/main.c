@@ -13,7 +13,7 @@ sbit beep = P3^6;
 /* 定义模型变量 */
 u8 location = 0;								// 记录当期是哪一位闪烁
 u8 value[4] = {1, 2, 3, 4};							// 记录当前数码管显示的值
-u8 alarm[4] = {1, 2, 3, 4};							// 记录闹钟响铃的时刻
+u8 alarm[4] = {1, 2, 0, 0};							// 记录闹钟响铃的时刻
 
 enum display_mode state = ClockDisplay;
 enum flicker_state flag;
@@ -49,114 +49,21 @@ int main()
         
         while(1)
         {
-                switch(state)
+                IE = IE & 0x7f;
+                
+                if(ClockDisplay == state)
                 {
-                        case (ClockDisplay):
-                                tmp1 = DS1302_ReadRegister(DS1302_HR | DS1302_READ);
-                                tmp2 = DS1302_ReadRegister(DS1302_MIN | DS1302_READ);
-                                flag = light;
-                                
-                                value[0] = (tmp1 & 0xf0) >> 4;
-                                value[1] = tmp1 & 0x0f;
-                                value[2] = (tmp2 & 0xf0) >> 4;
-                                value[3] = tmp2 & 0x0f;
+                        tmp1 = DS1302_ReadRegister(DS1302_HR | DS1302_READ);
+                        tmp2 = DS1302_ReadRegister(DS1302_MIN | DS1302_READ);
+                        flag = light;
                         
-                                if((value[0] == alarm[0]) && (value[1] == alarm[1]) && (value[2] == alarm[2]) && (value[3] == alarm[3]))
-                                {
-                                        beep = 1;
-                                }
-                                else
-                                {
-                                        beep = 0;
-                                }
-                                break;
-                        
-                        case (ClockSet):
-                                tmp1 = DS1302_ReadRegister(DS1302_HR | DS1302_READ);
-                                tmp2 = DS1302_ReadRegister(DS1302_MIN | DS1302_READ);
-                                flag = flicker;
-                        
-                                value[0] = (tmp1 & 0xf0) >> 4;
-                                value[1] = tmp1 & 0x0f;
-                                value[2] = (tmp2 & 0xf0) >> 4;
-                                value[3] = tmp2 & 0x0f;
-                                break;
-                        
-                        case (DateDisplay):
-                                tmp1 = DS1302_ReadRegister(DS1302_MONTH | DS1302_READ);
-                                tmp2 = DS1302_ReadRegister(DS1302_DATE | DS1302_READ);
-                                flag = light;
-                        
-                                value[0] = (tmp1 & 0xf0) >> 4;
-                                value[1] = tmp1 & 0x0f;
-                                value[2] = (tmp2 & 0xf0) >> 4;
-                                value[3] = tmp2 & 0x0f;
-                                break;
-                        
-                        case (DateSet):
-                                tmp1 = DS1302_ReadRegister(DS1302_MONTH | DS1302_READ);
-                                tmp2 = DS1302_ReadRegister(DS1302_DATE | DS1302_READ);
-                                flag = flicker;
-                        
-                                value[0] = (tmp1 & 0xf0) >> 4;
-                                value[1] = tmp1 & 0x0f;
-                                value[2] = (tmp2 & 0xf0) >> 4;
-                                value[3] = tmp2 & 0x0f;
-                                break;
-                        
-                        case (YearDisplay):
-                                tmp1 = DS1302_ReadRegister(DS1302_YEAR | DS1302_READ);
-                                flag = light;
-                        
-                                value[0] = 2;
-                                value[1] = 0;
-                                value[2] = (tmp1 & 0xf0) >> 4;
-                                value[3] = tmp1 & 0x0f;
-                                break;
-                        
-                        case (YearSet):
-                                tmp1 = DS1302_ReadRegister(DS1302_YEAR | DS1302_READ);
-                                flag = flicker;
-                        
-                                value[0] = 2;
-                                value[1] = 0;
-                                value[2] = (tmp1 & 0xf0) >> 4;
-                                value[3] = tmp1 & 0x0f;
-                                break;
-                        
-                        case (WeekDisplay):
-                                tmp1 = DS1302_ReadRegister(DS1302_DAY | DS1302_READ);
-                                flag = light;
-                        
-                                value[0] = 16;
-                                value[1] = 16;
-                                value[2] = tmp1 & 0x0f;
-                                value[3] = 16;
-                                break;
-                        
-                        case (WeekSet):
-                                tmp1 = DS1302_ReadRegister(DS1302_DAY | DS1302_READ);
-                                flag = flicker;
-                        
-                                value[0] = 16;
-                                value[1] = 16;
-                                value[2] = tmp1 & 0x0f;
-                                value[3] = 16;
-                                break;
-                        
-                        case (AlarmDisplay):
-                                flag = light;
-                                break;
-                        
-                        case (AlarmSet):
-                                flag = flicker;
-                                break;
-                        
-                        case (TemperatureDisplay):
-                                flag = light;
-                                break;
-
+                        value[0] = (tmp1 & 0xf0) >> 4;
+                        value[1] = tmp1 & 0x0f;
+                        value[2] = (tmp2 & 0xf0) >> 4;
+                        value[3] = tmp2 & 0x0f;
                 }
+                
+                IE = IE | 0x80;
                 
                 /* 这里扫描的时候是正常显示4位 */
                 for(j = flickerCount; j > 0; j--)
@@ -178,7 +85,7 @@ int main()
                                 delay_us(50);
                         }
                 }
-                        
+                
                 if(flicker == flag)
                 {
                         /* 这里扫描的时候location对应位不显示，只显示其他位 */
