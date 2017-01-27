@@ -2,7 +2,7 @@
 #include "bsp_delay.h"
 #include "bsp_ds1302.h"
 
-/* 这里需要使用extern声明其他c文件定义的变量 */
+/* 这里需要使用 extern 声明其他 c 文件定义的变量 */
 extern u8 value[4];
 extern u8 alarm[4];
 extern u8 location;
@@ -153,79 +153,136 @@ void Key_Control(u8 keyValue)
         }
         else if(flicker == flag) /* 设置界面下按键的功能 */
         {
-                
+                switch(keyValue)
+                {
+                        /* 1111 1110 P1.0口对应按键按下 K0 左/年 */
+                        case(0xfe):
+                                if(location > 0)
+                                {
+                                        location -= 1;
+                                }
+                                break;
+                        
+                        /* 1111 1101 P1.1口对应按键按下 K1 右/日期 */
+                        case(0xfd):     
+                                if(location < 3)
+                                {
+                                        location += 1;
+                                }
+                                break;
+                        
+                        /* 1111 1011 P1.2口对应按键按下 K2 设置 */
+                        case(0xfb):     
+                                flag = light;
+                                state = ClockDisplay;
+                                break;
+                        
+                        /* 1111 0111 P1.3口对应按键按下 K3 切换/星期 */
+                        case(0xf7):
+                                if(ClockSet == state)
+                                {
+                                        DS1302_WriteRegister(DS1302_HR | DS1302_WRITE, (value[0] << 4) | value[1]);
+                                        DS1302_WriteRegister(DS1302_MIN | DS1302_WRITE, (value[2] << 4) | value[3]);
+                                        
+                                        tmp1 = DS1302_ReadRegister(DS1302_YEAR | DS1302_READ);
+                                        
+                                        value[0] = 2;
+                                        value[1] = 0;
+                                        value[2] = (tmp1 & 0xf0) >> 4;
+                                        value[3] = tmp1 & 0x0f;
+                                        
+                                        state = YearSet;
+                                }
+                                else if(YearSet == state)
+                                {
+                                        DS1302_WriteRegister(DS1302_YEAR | DS1302_WRITE, (value[2] << 4) | value[3]);
+                                        
+                                        tmp1 = DS1302_ReadRegister(DS1302_MONTH | DS1302_READ);
+                                        tmp2 = DS1302_ReadRegister(DS1302_DATE | DS1302_READ);
+                                        
+                                        value[0] = (tmp1 & 0xf0) >> 4;
+                                        value[1] = tmp1 & 0x0f;
+                                        value[2] = (tmp2 & 0xf0) >> 4;
+                                        value[3] = tmp2 & 0x0f;
+                                        
+                                        state = DateSet;
+                                }
+                                else if(DateSet == state)
+                                {
+                                        DS1302_WriteRegister(DS1302_MONTH | DS1302_WRITE, (value[0] << 4) | value[1]);
+                                        DS1302_WriteRegister(DS1302_DATE | DS1302_WRITE, (value[2] << 4) | value[3]);
+                                        
+                                        tmp1 = DS1302_ReadRegister(DS1302_DAY | DS1302_READ);
+                                        
+                                        value[0] = 16;
+                                        value[1] = 16;
+                                        value[2] = tmp1 & 0x0f;
+                                        value[3] = 16;
+                                        
+                                        state = WeekSet;
+                                }
+                                else if(WeekSet == state)
+                                {
+                                        DS1302_WriteRegister(DS1302_DAY | DS1302_WRITE, (value[2] << 4) | value[3]);
+                                        
+                                        tmp1 = DS1302_ReadRegister(DS1302_HR | DS1302_READ);
+                                        tmp2 = DS1302_ReadRegister(DS1302_MIN | DS1302_READ);
+                                        
+                                        value[0] = (tmp1 & 0xf0) >> 4;
+                                        value[1] = tmp1 & 0x0f;
+                                        value[2] = (tmp2 & 0xf0) >> 4;
+                                        value[3] = tmp2 & 0x0f;
+                                        state = ClockSet;
+                                }
+                                break;
+                        
+                        /* 1110 1111 P1.4口对应按键按下 K4 加/闹钟 */
+                        case(0xef):     
+                                switch(location)
+                                {
+                                        case (0):
+                                                if(value[0] < 2)
+                                                {
+                                                        value[0] += 1;
+                                                }
+
+                                                if(value[0] == 2 && value[1] > 3)
+                                                {
+                                                        value[1] = 3;
+                                                }
+                                                break;
+                                        case (1):
+                                                if(value[0] < 2 && value[1] < 9)
+                                                {
+                                                        value[1] += 1;
+                                                }
+                                                else if(value[0] == 2 && value[1] < 3)
+                                                {
+                                                value[1] += 1;
+                                                }
+                                                break;
+                                        case (2):
+                                                if(value[location] < 5)
+                                                {
+                                                        value[location] += 1;
+                                                }
+                                                break;
+                                        case (3):
+                                                if(value[location] < 9)
+                                                {
+                                                        value[location] += 1;
+                                                }
+                                                break;
+                                }
+                                break;
+                                
+                        /* 1101 1111 P1.5口对应按键按下 K5 减/温度 */
+                        case(0xdf):
+                                if(value[location] > 0)
+                                {
+                                value[location] -= 1;
+                                }
+                                break;
+                }
         }
-        
-        
-        
-//        /* 根据捕捉的键值解析出按下的键，并作出相应的处理 */
-//        switch(keyValue)
-//        {
-//                case(0xfe):     // 1111 1110 P1.0口对应按键按下 K0 左/年
-//                        if(location > 0)
-//			{
-//				location -= 1;
-//			}
-//                        break;
-//                
-//                case(0xfd):     // 1111 1101 P1.1口对应按键按下 K1 右/日期
-//                        if(location < 3)
-//			{
-//				location += 1;
-//			}
-//                        break;
-//			
-//                case(0xfb):     // 1111 1011 P1.2口对应按键按下 K2 设置
-//                        break;
-//			
-//                case(0xf7):     // 1111 0111 P1.3口对应按键按下 K3 切换/星期
-//                        break;
-//			
-//		case(0xef):     // 1110 1111 P1.4口对应按键按下 K4 加/闹钟
-//                        switch(location)
-//			{
-//				case (0):
-//					if(value[0] < 2)
-//					{
-//						value[0] += 1;
-//					}
-//					
-//					if(value[0] == 2 && value[1] > 3)
-//					{
-//						value[1] = 3;
-//					}
-//					
-//					break;
-//				case (1):
-//					if(value[0] < 2 && value[1] < 9)
-//					{
-//						value[1] += 1;
-//					}
-//					else if(value[0] == 2 && value[1] < 3)
-//					{
-//						value[1] += 1;
-//					}
-//					break;
-//				case (2):
-//					if(value[location] < 5)
-//					{
-//						value[location] += 1;
-//					}
-//					break;
-//				case (3):
-//					if(value[location] < 9)
-//					{
-//						value[location] += 1;
-//					}
-//					break;
-//			}
-//                        break;
-//			
-//                case(0xdf):     // 1101 1111 P1.5口对应按键按下 K5 减/温度
-//                        if(value[location] > 0)
-//			{
-//				value[location] -= 1;
-//			}
-//                        break;
-//        }
 }
